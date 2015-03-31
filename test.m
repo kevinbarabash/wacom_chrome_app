@@ -4,8 +4,9 @@
 char msg[100];
 
 CGEventRef handleCGEvent(CGEventTapProxy proxy, CGEventType type, CGEventRef eventRef, void *refcon) {
-  if (type == kCGEventLeftMouseDown || type == kCGEventMouseMoved || type == kCGEventLeftMouseDragged) {
+  if (type == kCGEventLeftMouseDown || type == kCGEventMouseMoved || type == kCGEventLeftMouseDragged || type == kCGEventRightMouseDragged) {
     NSEvent *event = [NSEvent eventWithCGEvent:eventRef];
+
     sprintf(msg, "{\"pressure\":%f,\"x\":%f,\"y\":%f}", event.pressure, event.locationInWindow.x, event.locationInWindow.y);
     unsigned int len = strlen(msg);
     fwrite((char *)&len, sizeof(char), 4, stdout);
@@ -13,7 +14,8 @@ CGEventRef handleCGEvent(CGEventTapProxy proxy, CGEventType type, CGEventRef eve
     fflush(stdout);
 
     //    printf("pressure = %f, tilt x,y = %f, %f, location = %f, %f\n", event.pressure, event.tilt.x, event.tilt.y, event.locationInWindow.x, event.locationInWindow.y);
-  }  
+  }
+
   return eventRef;
 }
 
