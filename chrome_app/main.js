@@ -1,7 +1,29 @@
+var width = screen.width;
+var height = screen.height;
+
+var appWin = chrome.app.window.current();
+var isFullscreen = false;
+
+appWin.onFullscreened.addListener(function () { 
+    console.log(appWin.isFullscreen());
+    isFullscreen = appWin.isFullscreen();
+});
+
+appWin.onBoundsChanged.addListener(function () {
+    var bounds = appWin.getBounds();
+    
+    // for some reason appWin.isFullScreen() returns true when exiting
+    // fullscreen mode
+    if (bounds.top !== 0) {
+        isFullscreen = false;
+    }
+});
+
+
 function createCanvas(opacity) {
     var canvas = document.createElement('canvas');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
     canvas.style.position = 'absolute';
     canvas.style.left = 0;
     canvas.style.top = 0;
@@ -12,15 +34,19 @@ function createCanvas(opacity) {
     return canvas;
 }
 
+var layer_opacity = 1.0;
+
 var canvas1 = createCanvas();
-var canvas2 = createCanvas(0.5);
+var canvas2 = createCanvas(layer_opacity);
 
 var ctx1 = canvas1.getContext('2d');
 
+ctx1.globalAlpha = layer_opacity;
 ctx1.fillStyle = 'cyan';
-ctx1.fillRect(0,0,window.innerWidth,window.innerHeight);
+ctx1.fillRect(0,0,width,height);
 
 var ctx2 = canvas2.getContext('2d');
+ctx2.globalAlpha = 0.25;
 
 CanvasRenderingContext2D.prototype.fillCircle = function (x,y,r) {
     this.beginPath();
@@ -35,20 +61,22 @@ var offsetX = 0;
 var offsetY = 0;
 var initX = 0, initY = 0;
 
+
 var port = chrome.runtime.connectNative('com.kevinb.wacom');
 port.onMessage.addListener(function(msg) {
     radius = 3 * msg.pressure;
     
     if (previousPressure > 0 && msg.pressure == 0) {
-        down = false;
-        ctx1.globalAlpha = 0.5;
         ctx1.drawImage(canvas2, 0, 0);
-        ctx2.clearRect(0,0,window.innerWidth,window.innerHeight);
+        ctx2.clearRect(0,0,width,height);
     }
     
-    if (down) {
+    if (down && !document.hidden) {
         var x = msg.x - window.screenLeft;
-        var y = 900 - msg.y - window.screenTop - 22;
+        var y = 900 - msg.y - window.screenTop;
+        if (!isFullscreen) {
+            y -= 22;
+        }
 
         var dist = distance(lastX, lastY, x, y);
 
@@ -64,7 +92,6 @@ port.onMessage.addListener(function(msg) {
                 interim += spacing;
             }
         }
-        //ctx2.fillCircle(e.pageX, e.pageY, radius);
 
         lastX = x;
         lastY = y;
@@ -72,8 +99,10 @@ port.onMessage.addListener(function(msg) {
     
     if (previousPressure == 0 && msg.pressure > 0) {
         lastX = msg.x - window.screenLeft;
-        lastY = 900 - msg.y - window.screenTop - 22;
-        down = true;
+        lastY = 900 - msg.y - window.screenTop;
+        if (!isFullscreen) {
+            lastY -= 22;
+        }
         
         offsetX = lastX - initX;
         offsetY = lastY - initY;
@@ -91,12 +120,55 @@ var distance = function(x1, y1, x2, y2) {
     return Math.sqrt(dx * dx + dy * dy);
 };
 
-//document.addEventListener('mousedown', function (e) {
-//    down = true;
-//});
-//
-//document.addEventListener('mouseup', function (e) {
-//    if (down) {
-//        down = false;
-//    }
-//});
+
+var canvas = document.createElement('canvas');
+canvas.width = 160;
+canvas.height = 150;
+canvas.style.position = 'absolute';
+canvas.style.left = 0;
+canvas.style.top = 0;
+
+document.body.appendChild(canvas);
+
+var colorCtx = canvas.getContext('2d');
+var overlay = document.createElement('img');
+overlay.onload = function () {
+    colorCtx.fillStyle = 'red';
+    colorCtx.fillRect(0,0,150,150);
+    colorCtx.drawImage(overlay, 0, 0);
+};
+overlay.src = 'colorpicker_overlay.png';
+
+var rainbow = document.createElement('img');
+rainbow.onload = function () {
+    colorCtx.drawImage(rainbow, 150, 0);
+};
+rainbow.src = 'rainbow.png';
+
+document.addEventListener('mousedown', function (e) {
+    // TODO: extract a get pixel color methodi
+    var imageData, data, color;
+    
+    if (e.pageX < 150 && e.pageY < 150) {
+        imageData = colorCtx.getImageData(e.pageX, e.pageY, 1, 1);
+        data = imageData.data;
+        color = 'rgb(' + data[0] + ',' + data[1] + ',' + data[2] + ')';
+        ctx2.fillStyle = color;
+    } else if (e.pageX > 150 && e.pageX < 160 && e.pageY < 150) {
+        imageData = colorCtx.getImageData(e.pageX, e.pageY, 1, 1);
+        data = imageData.data;
+        color = 'rgb(' + data[0] + ',' + data[1] + ',' + data[2] + ')';
+
+        colorCtx.fillStyle = color;
+        colorCtx.fillRect(0,0,150,150);
+        colorCtx.drawImage(overlay, 0, 0);
+    }
+    down = true;
+});
+
+document.addEventListener('mouseup', function (e) {
+    if (down) {
+        down = false;
+    }
+});
+
