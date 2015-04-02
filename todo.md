@@ -14,4 +14,11 @@
 - gaussian brush (drawImage instead of fillCircle)
 - brush previews
 - aspect ratio, rotation, control rotation with tilt?
-- brush size
+- brush size[done]
+- reference artwork
+- panning[done] + zoom
+- splitscreen 
+- send multiple points in a single message
+- cursor overlay to show brush size
+  - crosshairs for small brushes
+  - oval/circle for large brushes

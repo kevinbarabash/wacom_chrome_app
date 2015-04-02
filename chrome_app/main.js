@@ -4,6 +4,11 @@ var height = screen.height;
 var appWin = chrome.app.window.current();
 var isFullscreen = false;
 
+var transform = {
+    dx: 0,
+    dy: 0
+};
+
 appWin.onFullscreened.addListener(function () { 
     console.log(appWin.isFullscreen());
     isFullscreen = appWin.isFullscreen();
@@ -54,61 +59,92 @@ CanvasRenderingContext2D.prototype.fillCircle = function (x,y,r) {
     this.fill();
 };
 
-var radius = 0;
+// TODO: max_radius, current_radius
+var radius = 3;
 var previousPressure = 0;
 
-var offsetX = 0;
-var offsetY = 0;
-var initX = 0, initY = 0;
 
+var keyCode = -1;
+
+document.addEventListener('keydown', function (e) {
+    if (e.keyCode !== keyCode) {
+        keyCode = e.keyCode;
+    }
+    console.log(keyCode);
+});
+
+document.addEventListener('keyup', function (e) {
+    keyCode = -1;
+});
 
 var port = chrome.runtime.connectNative('com.kevinb.wacom');
 port.onMessage.addListener(function(msg) {
-    radius = 3 * msg.pressure;
-    
+    // TODO: have separate handlers for each modifier key
+    var x, y, dx, dy;
+
     if (previousPressure > 0 && msg.pressure == 0) {
         ctx1.drawImage(canvas2, 0, 0);
         ctx2.clearRect(0,0,width,height);
     }
-    
+
     if (down && !document.hidden) {
-        var x = msg.x - window.screenLeft;
-        var y = 900 - msg.y - window.screenTop;
+        x = msg.x - window.screenLeft;
+        y = 900 - msg.y - window.screenTop;
         if (!isFullscreen) {
             y -= 22;
         }
 
-        var dist = distance(lastX, lastY, x, y);
+        if (keyCode === 32) {
+            dx = x - lastX;
+            dy = y - lastY;
 
-        if (dist > spacing) {
-            var interim = spacing;
-            while (interim < dist) {
-                var frac = interim / dist;
-                var one_minus_frac = 1.0 - frac;
-                var pressure = one_minus_frac * previousPressure + frac * msg.pressure;
-                var inter_x = one_minus_frac * lastX + frac * x;
-                var inter_y = one_minus_frac * lastY + frac * y;
-                ctx2.fillCircle(inter_x, inter_y, 3 * pressure);
-                interim += spacing;
+            //ctx1.translate(-dx, -dy);
+            ctx2.translate(-dx, -dy);
+
+            transform.dx += dx;
+            transform.dy += dy;
+
+            canvas1.style.transform = 'translate3d(' + transform.dx + 'px,' + transform.dy + 'px,0px)';
+            canvas2.style.transform = 'translate3d(' + transform.dx + 'px,' + transform.dy + 'px,0px)';
+        } else if (keyCode === 65) {
+            dx = x - lastX;
+            dy = y - lastY;
+            
+            radius += dx;
+            if (radius < 0.5) {
+                radius = 0.5;
+            }
+        } else {
+            var dist = distance(lastX, lastY, x, y);
+
+            if (dist > spacing) {
+                var interim = spacing;
+                while (interim < dist) {
+                    var frac = interim / dist;
+                    var one_minus_frac = 1.0 - frac;
+                    var pressure = one_minus_frac * previousPressure + frac * msg.pressure;
+                    var inter_x = one_minus_frac * lastX + frac * x;
+                    var inter_y = one_minus_frac * lastY + frac * y;
+                    ctx2.fillCircle(inter_x, inter_y, radius * pressure);
+                    interim += spacing;
+                }
             }
         }
 
         lastX = x;
         lastY = y;
     }
-    
+
     if (previousPressure == 0 && msg.pressure > 0) {
         lastX = msg.x - window.screenLeft;
         lastY = 900 - msg.y - window.screenTop;
         if (!isFullscreen) {
             lastY -= 22;
         }
-        
-        offsetX = lastX - initX;
-        offsetY = lastY - initY;
     }
 
     previousPressure = msg.pressure;
+
 });
 
 var down = false;
@@ -146,7 +182,7 @@ rainbow.onload = function () {
 rainbow.src = 'rainbow.png';
 
 document.addEventListener('mousedown', function (e) {
-    // TODO: extract a get pixel color methodi
+    // TODO: extract a get pixel color method
     var imageData, data, color;
     
     if (e.pageX < 150 && e.pageY < 150) {
