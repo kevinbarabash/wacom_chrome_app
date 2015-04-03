@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <style>
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+</body>
+</html>
+<script src="lib/three.min.js"></script>
+<script>
+
+    var scene, camera, renderer;
+    var geometry, material, mesh, plane;
+
+    init();
+//    animate();
+
+    function init() {
+
+        scene = new THREE.Scene();
+
+        camera = new THREE.OrthographicCamera(0, window.innerWidth, window.innerHeight, 0, 0, 500);
+        camera.position.z = 200;
+        
+        plane = new THREE.Mesh(
+                new THREE.PlaneGeometry(100, 100, 1, 1),
+                new THREE.MeshBasicMaterial({ color: 0xff00ff })
+        );
+        
+        plane.position.x = 100;
+        plane.position.y = 100;
+        scene.add(plane);
+
+        renderer = new THREE.WebGLRenderer();
+        renderer.setSize( window.innerWidth, window.innerHeight );
+
+        document.body.appendChild( renderer.domElement );
+
+        renderer.render( scene, camera );
+    }
+
+    function animate() {
+        requestAnimationFrame( animate );
+
+        renderer.render( scene, camera );
+    }
+    
+</script>
