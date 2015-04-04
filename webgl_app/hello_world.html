@@ -16,40 +16,119 @@
 <script src="lib/three.min.js"></script>
 <script>
 
-    var scene, camera, renderer;
-    var geometry, material, mesh, plane;
-
+    var scene, sceneRTT, camera, renderer;
+    var geometry, material, mesh, plane1, plane2;
+    var texture, rtTexture;
+    
+    var canvas = document.createElement('canvas');
+    canvas.width = 64;
+    canvas.height = 64;
+    canvas.style.position = 'absolute';
+    canvas.style.left = 0;
+    canvas.top = 0;
+    
+    var ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,64,64);
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    ctx.arc(32,32,30,0,2*Math.PI,false);
+    ctx.fill();
+    
     init();
 //    animate();
+    
+    function randomColor() {
+        var rand = Math.random;
+        return new THREE.Color(rand(), rand(), rand());
+    }
 
     function init() {
 
         scene = new THREE.Scene();
+        sceneRTT = new THREE.Scene();
 
         camera = new THREE.OrthographicCamera(0, window.innerWidth, window.innerHeight, 0, 0, 500);
         camera.position.z = 200;
-        
-        plane = new THREE.Mesh(
-                new THREE.PlaneGeometry(100, 100, 1, 1),
-                new THREE.MeshBasicMaterial({ color: 0xff00ff })
+
+        texture = new THREE.Texture(canvas);
+        texture.needsUpdate = true;
+
+        rtTexture = new THREE.WebGLRenderTarget(
+                window.innerWidth, window.innerHeight,
+                {
+                    minFilter: THREE.LinearFilter,
+                    magFilter: THREE.NearestFilter,
+                    format: THREE.RGBFormat
+                }
         );
+
+        plane1 = new THREE.Mesh(
+                new THREE.PlaneGeometry(64, 64, 1, 1),
+                new THREE.MeshBasicMaterial({
+                    map: texture, 
+                    transparent: true, 
+                    color:randomColor()
+                })
+        );
+
+        plane1.position.x = 100;
+        plane1.position.y = 100;
+        plane1.position.z = 1;
+
+        plane2 = new THREE.Mesh(
+                new THREE.PlaneGeometry(64, 64, 1, 1),
+                new THREE.MeshBasicMaterial({color: 0xff00ff})
+        );
+
+        plane2.position.x = 120;
+        plane2.position.y = 120;
+
+        scene.add(plane2);
+        scene.add(plane1);
+
+        renderer = new THREE.WebGLRenderer({
+            antialias: true,
+            preserveDrawingBuffer: true
+        });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.autoClear = false;
+
+        document.body.appendChild(renderer.domElement);
+
+        renderer.render(scene, camera);
+    }
+    
+    var down = false;
+    
+    document.addEventListener('mousedown', function(e) {
+        plane1.position.x = e.pageX;
+        plane1.position.y = window.innerHeight - e.pageY;
+
+        plane1.material.color = randomColor();
         
-        plane.position.x = 100;
-        plane.position.y = 100;
-        scene.add(plane);
-
-        renderer = new THREE.WebGLRenderer();
-        renderer.setSize( window.innerWidth, window.innerHeight );
-
-        document.body.appendChild( renderer.domElement );
-
         renderer.render( scene, camera );
-    }
+        down = true;
+    });
+    
+    document.addEventListener('mousemove', function(e) {
+        if (down) {
+            plane1.position.x = e.pageX;
+            plane1.position.y = window.innerHeight - e.pageY;
 
-    function animate() {
-        requestAnimationFrame( animate );
+            renderer.render( scene, camera );
+        }
+    });
+    
+    document.addEventListener('mouseup', function(e) {
+        if (down) {
+            down = false;
+        }
+    });
 
-        renderer.render( scene, camera );
-    }
+//    function animate() {
+//        requestAnimationFrame( animate );
+//
+//        renderer.render( scene, camera );
+//    }
     
 </script>
