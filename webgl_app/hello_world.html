@@ -29,7 +29,7 @@
     
     var ctx = canvas.getContext('2d');
     ctx.clearRect(0,0,64,64);
-    ctx.fillStyle = 'white';
+    ctx.fillStyle = 'rgba(255,255,255,1.0)';
     ctx.beginPath();
     ctx.arc(32,32,30,0,2*Math.PI,false);
     ctx.fill();
@@ -83,8 +83,8 @@
         plane2.position.x = 120;
         plane2.position.y = 120;
 
-        scene.add(plane2);
-        scene.add(plane1);
+        sceneRTT.add(plane2);
+        sceneRTT.add(plane1);
 
         renderer = new THREE.WebGLRenderer({
             antialias: true,
@@ -95,6 +95,19 @@
 
         document.body.appendChild(renderer.domElement);
 
+        renderer.render(sceneRTT, camera, rtTexture, false);
+
+        var rtPlane = new THREE.Mesh(
+                 new THREE.PlaneGeometry(window.innerWidth, window.innerHeight, 1, 1),
+                 new THREE.MeshBasicMaterial({
+                     map: rtTexture
+                 })
+        );
+
+        rtPlane.position.x = window.innerWidth / 2;
+        rtPlane.position.y = window.innerHeight / 2;
+        scene.add(rtPlane);
+        
         renderer.render(scene, camera);
     }
     
@@ -105,7 +118,8 @@
         plane1.position.y = window.innerHeight - e.pageY;
 
         plane1.material.color = randomColor();
-        
+
+        renderer.render(sceneRTT, camera, rtTexture, false);
         renderer.render( scene, camera );
         down = true;
     });
@@ -115,6 +129,7 @@
             plane1.position.x = e.pageX;
             plane1.position.y = window.innerHeight - e.pageY;
 
+            renderer.render(sceneRTT, camera, rtTexture, false);
             renderer.render( scene, camera );
         }
     });
