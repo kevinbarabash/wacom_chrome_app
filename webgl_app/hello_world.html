@@ -18,24 +18,37 @@
 
     var scene, sceneRTT, camera, renderer;
     var geometry, material, mesh, plane1, plane2;
-    var texture, rtTexture;
+    var texture, rtTexture, rtPlane;
     
     var canvas = document.createElement('canvas');
-    canvas.width = 64;
-    canvas.height = 64;
+    var radius = 64;
+
+    canvas.width = radius * 2;
+    canvas.height = radius * 2;
     canvas.style.position = 'absolute';
     canvas.style.left = 0;
     canvas.top = 0;
     
     var ctx = canvas.getContext('2d');
-    ctx.clearRect(0,0,64,64);
-    ctx.fillStyle = 'rgba(255,255,255,1.0)';
+    ctx.clearRect(0,0,2*radius,2*radius);
+
+    var imgData = ctx.getImageData(0,0,2*radius,2*radius);
+    for (var i = 0; i < 4 * radius * radius; i++) {
+        imgData.data[4*i+0] = 0;
+        imgData.data[4*i+1] = 0;
+        imgData.data[4*i+2] = 0;
+        imgData.data[4*i+3] = 0;
+    }
+    ctx.putImageData(imgData, 0, 0);
+    
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
     ctx.beginPath();
-    ctx.arc(32,32,30,0,2*Math.PI,false);
+    ctx.arc(radius,radius,radius - 2,0,2*Math.PI,false);
     ctx.fill();
     
+  
+    
     init();
-//    animate();
     
     function randomColor() {
         var rand = Math.random;
@@ -52,6 +65,7 @@
 
         texture = new THREE.Texture(canvas);
         texture.needsUpdate = true;
+//        texture.premultiplyAlpha = true;
 
         rtTexture = new THREE.WebGLRenderTarget(
                 window.innerWidth, window.innerHeight,
@@ -63,11 +77,15 @@
         );
 
         plane1 = new THREE.Mesh(
-                new THREE.PlaneGeometry(64, 64, 1, 1),
+                new THREE.PlaneGeometry(30, 30, 1, 1),
                 new THREE.MeshBasicMaterial({
                     map: texture, 
                     transparent: true, 
-                    color:randomColor()
+                    color:'white',
+                    blending: THREE.CustomBlending,
+                    blendSrc: THREE.SrcAlphaFactor,
+                    blendDst: THREE.DstAlphaFactor,
+                    blendEquation: THREE.AddEquation
                 })
         );
 
@@ -97,7 +115,7 @@
 
         renderer.render(sceneRTT, camera, rtTexture, false);
 
-        var rtPlane = new THREE.Mesh(
+        rtPlane = new THREE.Mesh(
                  new THREE.PlaneGeometry(window.innerWidth, window.innerHeight, 1, 1),
                  new THREE.MeshBasicMaterial({
                      map: rtTexture
@@ -117,7 +135,8 @@
         plane1.position.x = e.pageX;
         plane1.position.y = window.innerHeight - e.pageY;
 
-        plane1.material.color = randomColor();
+//        plane1.material.color = randomColor();
+        rtPlane.material.color = randomColor();
 
         renderer.render(sceneRTT, camera, rtTexture, false);
         renderer.render( scene, camera );
@@ -139,11 +158,5 @@
             down = false;
         }
     });
-
-//    function animate() {
-//        requestAnimationFrame( animate );
-//
-//        renderer.render( scene, camera );
-//    }
     
 </script>
