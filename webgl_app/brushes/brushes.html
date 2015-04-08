@@ -32,16 +32,24 @@
     xhr.send();
     
     var fragShader = xhr.responseText;
+    var brushSize = 200;
+
+    var uniforms = {
+        brushSize: {
+            type: 'f', // a float
+            value: brushSize
+        }
+    };
     var material1 = new THREE.ShaderMaterial({
         vertexShader:   vertShader,
         fragmentShader: fragShader,
-        transparent: true
+        transparent: true,
+        uniforms: uniforms
     });
     
     var material2 = new THREE.MeshBasicMaterial({ color: 0xff00ff });
-    
     var plane1 = new THREE.Mesh(
-        new THREE.PlaneGeometry(300, 300, 1, 1),
+        new THREE.PlaneGeometry(brushSize, brushSize, 1, 1),
         material1
     );
 
@@ -56,15 +64,39 @@
         preserveDrawingBuffer: true
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.autoClear = false;
+//    renderer.autoClear = false;
 
     document.body.appendChild(renderer.domElement);
 
     renderer.render(scene, camera);
     
-    for (var i = 0; i < 20; i++) {
-        plane1.position.x += 20;
+    var down = false;
+    document.addEventListener('mousedown', function(e) {
+        plane1.position.x = e.pageX;
+        plane1.position.y = window.innerHeight - e.pageY;
+
         renderer.render(scene, camera);
-    }
+        down = true
+    });
+    
+    document.addEventListener('mousemove', function (e) {
+        if (down) {
+            plane1.position.x = e.pageX;
+            plane1.position.y = window.innerHeight - e.pageY;
+
+            renderer.render(scene, camera);
+        }
+    });
+    
+    document.addEventListener('mouseup', function (e) {
+        if (down) {
+            down = false;
+        }
+    });
+    
+//    for (var i = 0; i < 20; i++) {
+//        plane1.position.x += 20;
+//        renderer.render(scene, camera);
+//    }
 
 </script>

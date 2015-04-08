@@ -1,5 +1,6 @@
 #define M_PI 3.1415926535897932384626433832795
 varying vec2 v_texcoord;
+uniform float brushSize;
 
 void main() {
   vec2 center = vec2(0.5, 0.5);
@@ -11,5 +12,5 @@ void main() {
   gl_FragColor = vec4(1.0,  // R
                       1.0,  // G
                       1.0,  // B
-                      e); // A
+                      1.0 - smoothstep(1.0 - 4.0 / brushSize, 1.0, d)); // A
 }
