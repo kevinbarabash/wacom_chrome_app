@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <style>
+        body {
+            margin: 0;
+        }
+    </style>
+    <script src="../lib/three.min.js"></script>
+</head>
+<body>
+
+</body>
+</html>
+<script>
+    
+    var scene = new THREE.Scene();
+    var camera = new THREE.OrthographicCamera(0, window.innerWidth, window.innerHeight, 0, 0, 500);
+    camera.position.z = 200;
+
+    var xhr;
+    xhr = new XMLHttpRequest();
+    xhr.open('GET', 'shader.vert', false);
+    xhr.send();
+
+    var vertShader = xhr.responseText;
+    
+    xhr = new XMLHttpRequest();
+    xhr.open('GET', 'shader.frag', false);
+    xhr.send();
+    
+    var fragShader = xhr.responseText;
+    var material1 = new THREE.ShaderMaterial({
+        vertexShader:   vertShader,
+        fragmentShader: fragShader,
+        transparent: true
+    });
+    
+    var material2 = new THREE.MeshBasicMaterial({ color: 0xff00ff });
+    
+    var plane1 = new THREE.Mesh(
+        new THREE.PlaneGeometry(300, 300, 1, 1),
+        material1
+    );
+
+    plane1.position.x = 250;
+    plane1.position.y = 250;
+    plane1.position.z = 1;
+    
+    scene.add(plane1);
+
+    var renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        preserveDrawingBuffer: true
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.autoClear = false;
+
+    document.body.appendChild(renderer.domElement);
+
+    renderer.render(scene, camera);
+    
+    for (var i = 0; i < 20; i++) {
+        plane1.position.x += 20;
+        renderer.render(scene, camera);
+    }
+
+</script>
