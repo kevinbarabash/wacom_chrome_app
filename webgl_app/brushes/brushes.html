@@ -8,7 +8,8 @@
             margin: 0;
         }
     </style>
-    <script src="../lib/three.min.js"></script>
+    <script src="../lib/three.js"></script>
+    <script src="../lib/dat.gui.js"></script>
 </head>
 <body>
 
@@ -32,12 +33,20 @@
     xhr.send();
     
     var fragShader = xhr.responseText;
-    var brushSize = 200;
+    var brushSize = 50;
 
     var uniforms = {
         brushSize: {
             type: 'f', // a float
             value: brushSize
+        },
+        color: {
+            type: 'c',
+            value: new THREE.Color(0.0, 0.0, 0.5)
+        },
+        softness: {
+            type: 'f',
+            value: 0.0
         }
     };
     var material1 = new THREE.ShaderMaterial({
@@ -47,7 +56,7 @@
         uniforms: uniforms
     });
     
-    var material2 = new THREE.MeshBasicMaterial({ color: 0xff00ff });
+    var material2 = new THREE.MeshBasicMaterial({ color: 0x00007f });
     var plane1 = new THREE.Mesh(
         new THREE.PlaneGeometry(brushSize, brushSize, 1, 1),
         material1
@@ -64,11 +73,13 @@
         preserveDrawingBuffer: true
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
-//    renderer.autoClear = false;
+    renderer.autoClear = false;
+    renderer.setClearColor( new THREE.Color(0.75, 0.75, 0.75) );
+    renderer.clearColor();
 
     document.body.appendChild(renderer.domElement);
 
-    renderer.render(scene, camera);
+//    renderer.render(scene, camera);
     
     var down = false;
     document.addEventListener('mousedown', function(e) {
@@ -94,9 +105,32 @@
         }
     });
     
-//    for (var i = 0; i < 20; i++) {
-//        plane1.position.x += 20;
-//        renderer.render(scene, camera);
-//    }
+    function drawStroke() {
+        renderer.clearColor();
+        var cy = 250;
+        var cx = 250;
+        var count = 20;
+        for (var i = 0; i < count; i++) {
+            plane1.position.x = cx + i * 500 / count;
+            plane1.position.y = cy + 50 * Math.sin(i / count * Math.PI * 2.0);
+            renderer.render(scene, camera);
+        }
+    }
 
+    requestAnimationFrame(drawStroke);
+    
+    var settings = {
+        brushSize: 5
+    };
+    
+    var gui = new dat.GUI();
+    
+    var controller = gui.add(settings, 'brushSize', 5, 200);
+    controller.onChange(function (value) {
+        console.log(value);
+        material1.uniforms.brushSize.value = value;
+        
+        drawStroke();
+    });
+    
 </script>
