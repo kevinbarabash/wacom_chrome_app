@@ -46,7 +46,7 @@
         },
         softness: {
             type: 'f',
-            value: 0.0
+            value: 1.0
         }
     };
     var material1 = new THREE.ShaderMaterial({
@@ -55,8 +55,6 @@
         transparent: true,
         uniforms: uniforms
     });
-    
-    var material2 = new THREE.MeshBasicMaterial({ color: 0x00007f });
     var plane1 = new THREE.Mesh(
         new THREE.PlaneGeometry(brushSize, brushSize, 1, 1),
         material1
@@ -105,31 +103,87 @@
         }
     });
     
+    function distance(p1, p2) {
+        var dx = p2[0] - p1[0];
+        var dy = p2[1] - p1[1];
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+    
+    function lerp(p1, p2, t) {
+        var x = (1-t)*p1[0] + t*p2[0];
+        var y = (1-t)*p1[1] + t*p2[1];
+        return [x,y];
+    }
+    
+    function stampBrush(point) {
+        plane1.position.x = point[0];
+        plane1.position.y = point[1];
+        renderer.render(scene, camera);
+    }
+    
     function drawStroke() {
         renderer.clearColor();
         var cy = 250;
         var cx = 250;
-        var count = 20;
+        var count = 50;
+        var points =[];
+        
         for (var i = 0; i < count; i++) {
-            plane1.position.x = cx + i * 500 / count;
-            plane1.position.y = cy + 50 * Math.sin(i / count * Math.PI * 2.0);
-            renderer.render(scene, camera);
+            var x = cx + i * 700 / count;
+            var y = cy + 80 * Math.sin(i / count * Math.PI * 2.0);
+            points.push([x,y]);
         }
+        
+        var spacing = brushSize / 4;
+        var previousPoint = points[0];
+        var currentSpace = spacing;
+        
+        for (var i = 1; i < points.length; i++) {
+            var nextPoint = points[i];
+            var dist = distance(previousPoint, nextPoint);
+            var remainingDist = dist;
+            var travelledDist = 0;
+            
+            while (currentSpace < remainingDist) {
+                var t = (travelledDist + currentSpace) / dist;
+                var p = lerp(previousPoint, nextPoint, t);
+
+                stampBrush(p);
+                
+                remainingDist = remainingDist - currentSpace;
+                travelledDist = travelledDist + currentSpace;
+                
+                currentSpace = spacing;
+            }
+            currentSpace = spacing - remainingDist;
+            previousPoint = nextPoint;
+        }
+
     }
 
     requestAnimationFrame(drawStroke);
     
+    var startBrushSize = 20;
+    
     var settings = {
-        brushSize: 5
+        brushSize: startBrushSize,
+        softness: 1.0
     };
     
     var gui = new dat.GUI();
     
-    var controller = gui.add(settings, 'brushSize', 5, 200);
-    controller.onChange(function (value) {
-        console.log(value);
-        material1.uniforms.brushSize.value = value;
-        
+    var softnessController = gui.add(settings, 'softness', 0.0, 1.0);
+    var brushSizeController = gui.add(settings, 'brushSize', 2, 200);
+    
+    softnessController.onChange(function (value) {
+        uniforms.softness.value = value;
+        drawStroke();
+    });
+
+    brushSizeController.onChange(function (value) {
+        uniforms.brushSize.value = value;
+        plane1.scale.setX(value / startBrushSize);
+        plane1.scale.setY(value / startBrushSize);
         drawStroke();
     });
     
