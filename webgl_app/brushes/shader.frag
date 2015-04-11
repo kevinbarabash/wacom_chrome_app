@@ -14,6 +14,6 @@ void main() {
   float e = exp(-(x*x + y*y)/0.08);
   
   float max = 1.0 - 4.0 / brushSize;
-  float flow = 0.5;
+  float flow = 0.25;
   gl_FragColor = vec4(color, flow * smoothstep(1.0, clamp(softness, 0.0, 1.0) * max, d));
 }

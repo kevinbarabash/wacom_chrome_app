@@ -46,7 +46,7 @@
         },
         softness: {
             type: 'f',
-            value: 1.0
+            value: 0.0
         }
     };
     var material1 = new THREE.ShaderMaterial({
@@ -76,24 +76,41 @@
     renderer.clearColor();
 
     document.body.appendChild(renderer.domElement);
-
-//    renderer.render(scene, camera);
+    
+    var spacing = 10;
+    var previousPoint, currentSpace;
     
     var down = false;
     document.addEventListener('mousedown', function(e) {
-        plane1.position.x = e.pageX;
-        plane1.position.y = window.innerHeight - e.pageY;
+        down = true;
 
-        renderer.render(scene, camera);
-        down = true
+        previousPoint = [e.pageX, window.innerHeight - e.pageY];
+        currentSpace = spacing;
+
+        stampBrush(previousPoint);
     });
     
     document.addEventListener('mousemove', function (e) {
         if (down) {
-            plane1.position.x = e.pageX;
-            plane1.position.y = window.innerHeight - e.pageY;
+            var nextPoint = [e.pageX, window.innerHeight - e.pageY];
 
-            renderer.render(scene, camera);
+            var dist = distance(previousPoint, nextPoint);
+            var remainingDist = dist;
+            var travelledDist = 0;
+
+            while (currentSpace < remainingDist) {
+                var t = (travelledDist + currentSpace) / dist;
+                var p = lerp(previousPoint, nextPoint, t);
+
+                stampBrush(p);
+
+                remainingDist = remainingDist - currentSpace;
+                travelledDist = travelledDist + currentSpace;
+
+                currentSpace = spacing;
+            }
+            currentSpace = currentSpace - remainingDist;
+            previousPoint = nextPoint;
         }
     });
     
@@ -134,16 +151,16 @@
             points.push([x,y]);
         }
         
-        var spacing = brushSize / 4;
+        var spacing = 10;
         var previousPoint = points[0];
         var currentSpace = spacing;
-        
+
         for (var i = 1; i < points.length; i++) {
             var nextPoint = points[i];
             var dist = distance(previousPoint, nextPoint);
             var remainingDist = dist;
             var travelledDist = 0;
-            
+
             while (currentSpace < remainingDist) {
                 var t = (travelledDist + currentSpace) / dist;
                 var p = lerp(previousPoint, nextPoint, t);
@@ -155,7 +172,7 @@
                 
                 currentSpace = spacing;
             }
-            currentSpace = spacing - remainingDist;
+            currentSpace = currentSpace - remainingDist;
             previousPoint = nextPoint;
         }
 
@@ -167,7 +184,7 @@
     
     var settings = {
         brushSize: startBrushSize,
-        softness: 1.0
+        softness: 0.0
     };
     
     var gui = new dat.GUI();
