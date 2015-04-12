@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+
+</body>
+</html>
+<script>
+    
+    var canvas = document.createElement('canvas');
+    canvas.width = 1000;
+    canvas.height = 600;
+    document.body.appendChild(canvas);
+    var ctx = canvas.getContext('2d');
+    
+    function gaussian(x) {
+        return Math.exp(-x*x);
+    }
+    
+    function circle(x,y,r) {
+        ctx.beginPath();
+        ctx.arc(x,y,r,0,2*Math.PI,false);
+        ctx.fill();
+    }
+    
+    for (var x = -2; x < 2; x += 0.025) {
+        var y = gaussian(x);
+        
+        var px = 100 * (x + 2) + 10;
+        var py = 100 * y + 10;
+        circle(px, py, 1);
+    }
+
+    for (var x = -2; x < 2; x += 0.025) {
+        var y = gaussian(x);
+
+        var px = 100 * (x + 3.5) + 10;
+        var py = 100 * y + 10;
+        circle(px, py, 1);
+    }
+
+    for (var x = -2; x < 2; x += 0.025) {
+        var y = gaussian(x);
+
+        var px = 100 * (x + 5) + 10;
+        var py = 100 * y + 10;
+        circle(px, py, 1);
+    }
+    
+    
+</script>

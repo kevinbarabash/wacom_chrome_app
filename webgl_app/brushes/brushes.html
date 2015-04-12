@@ -33,7 +33,7 @@
     xhr.send();
     
     var fragShader = xhr.responseText;
-    var brushSize = 50;
+    var brushSize = 200;
 
     var uniforms = {
         brushSize: {
@@ -53,7 +53,8 @@
         vertexShader:   vertShader,
         fragmentShader: fragShader,
         transparent: true,
-        uniforms: uniforms
+        uniforms: uniforms,
+//        blending: THREE.CustomBlending,
     });
     var plane1 = new THREE.Mesh(
         new THREE.PlaneGeometry(brushSize, brushSize, 1, 1),
@@ -77,14 +78,14 @@
 
     document.body.appendChild(renderer.domElement);
     
-    var spacing = 10;
-    var previousPoint, currentSpace;
+    var spacing, previousPoint, currentSpace;
     
     var down = false;
     document.addEventListener('mousedown', function(e) {
         down = true;
 
         previousPoint = [e.pageX, window.innerHeight - e.pageY];
+        spacing = settings.brushSize / 10.0;
         currentSpace = spacing;
 
         stampBrush(previousPoint);
@@ -102,6 +103,8 @@
                 var t = (travelledDist + currentSpace) / dist;
                 var p = lerp(previousPoint, nextPoint, t);
 
+                // TODO: don't do multiple stamps per mousemove
+                // instead use multiple meshes that use the same geometry object
                 stampBrush(p);
 
                 remainingDist = remainingDist - currentSpace;
@@ -180,11 +183,12 @@
 
     requestAnimationFrame(drawStroke);
     
-    var startBrushSize = 20;
+    var startBrushSize = 200;
     
     var settings = {
         brushSize: startBrushSize,
-        softness: 0.0
+        softness: 0.0,
+        flow: 0.25
     };
     
     var gui = new dat.GUI();

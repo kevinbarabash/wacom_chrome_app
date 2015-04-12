@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <style>
+        body {
+            margin: 0;
+            background-color: lightgray;
+        }
+        
+        canvas { 
+            background-color: white;
+        }
+    </style>
+</head>
+<body>
+
+<canvas width="1000" height="600" id="myCanvas"></canvas>
+
+</body>
+</html>
+
+<script>
+
+    var brushCanvas = document.createElement('canvas');
+    brushCanvas.width = 256;
+    brushCanvas.height = 256;
+    
+    var bCtx = brushCanvas.getContext("2d");
+    bCtx.fillStyle = 'rgba(0,0,0,0)';
+    bCtx.fillRect(0, 0, 256, 256);
+    
+    var grd = bCtx.createRadialGradient(128,128,64,128,128,128);
+    grd.addColorStop(0,"rgba(0,0,0,0.025)");
+    grd.addColorStop(1,"rgba(0,0,0,0)");
+    
+    bCtx.fillStyle = grd;
+    bCtx.fillRect(0, 0, 256, 256);
+
+    
+    var myCanvas = document.getElementById('myCanvas');
+    var myCtx = myCanvas.getContext('2d');
+
+    myCtx.fillStyle = 'white';
+    myCtx.fillRect(0,0,1000,600);
+    
+    for (var j = 0; j < 5; j++) {
+        for (var i = 0; i < 750; i += 20) {
+            myCtx.drawImage(brushCanvas, i + 3 * j, 150 + 2 * j);
+        }
+    }
+
+</script>
